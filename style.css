@@ -324,11 +324,3 @@ footer {
         font-size: 1.1rem;
     }
 }
-
-/* Prevent text selection during gameplay */
-.no-select {
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-}

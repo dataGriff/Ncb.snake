@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.height = size;
     
     // Load high score
-    highScore = localStorage.getItem('ncbHighScore') || 0;
+    highScore = parseInt(localStorage.getItem('ncbHighScore')) || 0;
     document.getElementById('highScore').textContent = highScore;
     
     // Event listeners
@@ -65,6 +65,9 @@ document.addEventListener('DOMContentLoaded', () => {
 // Start game
 function startGame() {
     document.getElementById('start-screen').classList.add('hidden');
+    if (gameLoop) {
+        clearInterval(gameLoop);
+    }
     initializeGame();
     isGameRunning = true;
     gameLoop = setInterval(update, speed);
@@ -263,6 +266,9 @@ function gameOver() {
 // Restart game
 function restartGame() {
     document.getElementById('game-over').classList.add('hidden');
+    if (gameLoop) {
+        clearInterval(gameLoop);
+    }
     initializeGame();
     isGameRunning = true;
     gameLoop = setInterval(update, speed);
@@ -350,7 +356,7 @@ function handleTouchMove(e) {
 
 // Handle window resize
 window.addEventListener('resize', () => {
-    if (!isGameRunning) {
+    if (!isGameRunning && snake) {
         const size = Math.min(CONFIG.canvasSize, window.innerWidth - 40);
         canvas.width = size;
         canvas.height = size;
