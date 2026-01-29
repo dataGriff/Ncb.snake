@@ -281,10 +281,10 @@ function draw() {
             
             // Wheels
             ctx.fillStyle = '#2c3e50';
-            ctx.fillRect(x + 3, y + 2, 3, 3);
-            ctx.fillRect(x + cellSize - 6, y + 2, 3, 3);
-            ctx.fillRect(x + 3, y + cellSize - 5, 3, 3);
-            ctx.fillRect(x + cellSize - 6, y + cellSize - 5, 3, 3);
+            ctx.fillRect(x + 3, y + 4, 3, 3);
+            ctx.fillRect(x + cellSize - 6, y + 4, 3, 3);
+            ctx.fillRect(x + 3, y + cellSize - 7, 3, 3);
+            ctx.fillRect(x + cellSize - 6, y + cellSize - 7, 3, 3);
         } else {
             // Draw trail (gradient from red to blue)
             const gradient = index / snake.length;
