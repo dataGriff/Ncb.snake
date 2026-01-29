@@ -24,6 +24,8 @@ let canvas, ctx;
 let snake, direction, nextDirection, food;
 let score, highScore, gameLoop, isGameRunning, speed;
 let touchStartX, touchStartY;
+let obstacles = [];
+let lastObstacleSpawn = 0;
 
 // Initialize game
 document.addEventListener('DOMContentLoaded', () => {
@@ -85,6 +87,8 @@ function initializeGame() {
     nextDirection = 'RIGHT';
     score = 0;
     speed = CONFIG.initialSpeed;
+    obstacles = [];
+    lastObstacleSpawn = 0;
     updateScore();
     spawnFood();
 }
@@ -97,13 +101,40 @@ function spawnFood() {
             x: Math.floor(Math.random() * CONFIG.gridSize),
             y: Math.floor(Math.random() * CONFIG.gridSize)
         };
-        validPosition = !snake.some(segment => segment.x === food.x && segment.y === food.y);
+        validPosition = !snake.some(segment => segment.x === food.x && segment.y === food.y) &&
+                       !obstacles.some(obstacle => obstacle.x === food.x && obstacle.y === food.y);
     }
+}
+
+// Spawn obstacle
+function spawnObstacle() {
+    const obstacleTypes = ['tree', 'car', 'signpost'];
+    let validPosition = false;
+    let obstacle;
+    
+    while (!validPosition) {
+        obstacle = {
+            x: Math.floor(Math.random() * CONFIG.gridSize),
+            y: Math.floor(Math.random() * CONFIG.gridSize),
+            type: obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)]
+        };
+        validPosition = !snake.some(segment => segment.x === obstacle.x && segment.y === obstacle.y) &&
+                       !obstacles.some(obs => obs.x === obstacle.x && obs.y === obstacle.y) &&
+                       !(obstacle.x === food.x && obstacle.y === food.y);
+    }
+    
+    obstacles.push(obstacle);
 }
 
 // Game update loop
 function update() {
     direction = nextDirection;
+    
+    // Spawn obstacles over time (every 3 score points)
+    if (score > 0 && score > lastObstacleSpawn && score % 3 === 0) {
+        spawnObstacle();
+        lastObstacleSpawn = score;
+    }
     
     // Calculate new head position
     const head = { ...snake[0] };
@@ -152,7 +183,16 @@ function checkCollision(head) {
     }
     
     // Self collision
-    return snake.some(segment => segment.x === head.x && segment.y === head.y);
+    if (snake.some(segment => segment.x === head.x && segment.y === head.y)) {
+        return true;
+    }
+    
+    // Obstacle collision
+    if (obstacles.some(obstacle => obstacle.x === head.x && obstacle.y === head.y)) {
+        return true;
+    }
+    
+    return false;
 }
 
 // Increase speed
@@ -186,17 +226,65 @@ function draw() {
         ctx.stroke();
     }
     
+    // Draw obstacles
+    obstacles.forEach(obstacle => {
+        const x = obstacle.x * cellSize;
+        const y = obstacle.y * cellSize;
+        
+        if (obstacle.type === 'tree') {
+            // Draw tree
+            ctx.fillStyle = '#27ae60';
+            ctx.beginPath();
+            ctx.arc(x + cellSize/2, y + cellSize/2, cellSize/3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#1e8449';
+            ctx.beginPath();
+            ctx.arc(x + cellSize/2, y + cellSize/2, cellSize/5, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (obstacle.type === 'car') {
+            // Draw parked car
+            ctx.fillStyle = '#95a5a6';
+            ctx.fillRect(x + 3, y + 3, cellSize - 6, cellSize - 6);
+            ctx.fillStyle = '#7f8c8d';
+            ctx.fillRect(x + cellSize/4, y + cellSize/4, cellSize/2, cellSize/2);
+        } else if (obstacle.type === 'signpost') {
+            // Draw signpost
+            ctx.fillStyle = '#e67e22';
+            ctx.fillRect(x + cellSize/2 - 2, y + 2, 4, cellSize - 4);
+            ctx.fillStyle = '#d35400';
+            ctx.fillRect(x + 4, y + cellSize/4, cellSize - 8, cellSize/3);
+        }
+    });
+    
     // Draw snake (car trail)
     snake.forEach((segment, index) => {
         const x = segment.x * cellSize;
         const y = segment.y * cellSize;
         
         if (index === 0) {
-            // Draw car head
+            // Draw car with more detail
+            // Car body
             ctx.fillStyle = '#e74c3c';
-            ctx.fillRect(x + 2, y + 2, cellSize - 4, cellSize - 4);
-            ctx.fillStyle = '#c0392b';
-            ctx.fillRect(x + cellSize/4, y + cellSize/4, cellSize/2, cellSize/2);
+            ctx.fillRect(x + 2, y + 4, cellSize - 4, cellSize - 8);
+            
+            // Car windows (windshield)
+            ctx.fillStyle = '#3498db';
+            if (direction === 'RIGHT') {
+                ctx.fillRect(x + cellSize - 6, y + cellSize/3, 3, cellSize/3);
+            } else if (direction === 'LEFT') {
+                ctx.fillRect(x + 3, y + cellSize/3, 3, cellSize/3);
+            } else if (direction === 'UP') {
+                ctx.fillRect(x + cellSize/3, y + 3, cellSize/3, 3);
+            } else if (direction === 'DOWN') {
+                ctx.fillRect(x + cellSize/3, y + cellSize - 6, cellSize/3, 3);
+            }
+            
+            // Wheels
+            ctx.fillStyle = '#2c3e50';
+            ctx.fillRect(x + 3, y + 4, 3, 3);
+            ctx.fillRect(x + cellSize - 6, y + 4, 3, 3);
+            ctx.fillRect(x + 3, y + cellSize - 7, 3, 3);
+            ctx.fillRect(x + cellSize - 6, y + cellSize - 7, 3, 3);
         } else {
             // Draw trail (gradient from red to blue)
             const gradient = index / snake.length;
